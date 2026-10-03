@@ -1,0 +1,83 @@
+# ──────────────────────────────────────────────────────────────────────────────
+#  profile-terminal · configuration
+#  Edit this file, push, and the workflow re-renders every panel. Nothing else to touch.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# GitHub account whose data fills the GitHub panels. Empty = the repository owner.
+github_user: ""
+
+# auto  → sample GitHub data while this repo is still named "profile-terminal" (the showcase),
+#         your real data once the repo is renamed to your username (a profile repo).
+# true  → always sample data. false → always real data.
+demo: auto
+
+# amber · phosphor · ice · magenta   (accent: "#hex" overrides the preset's colour)
+theme: amber
+accent: ""
+
+# Your timezone: drives the clock, session states and the commit-hour histogram.
+timezone: Europe/London
+
+identity:
+  name: ADA KESTREL
+  role: QUANT ENGINEER · LONDON
+  # Five function-code rows. Codes are 2–5 letters, values up to ~48 characters.
+  rows:
+    - [EDGE, "Execution research: impact, slippage, fill quality"]
+    - [BUILD, "Market data -> signal -> risk -> order router"]
+    - [NOW, "Shipping an open-source limit order book replay"]
+    - [EDU, "MSc Financial Engineering"]
+    - [TALK, "Quant dev roles · market structure · open source"]
+
+# Up to five keys under the hero. `auto: github` shows live stars and followers.
+links:
+  - { code: WEB, title: Website, sub: example.com, url: "https://example.com" }
+  - { code: IN, title: LinkedIn, sub: in/your-handle, url: "https://www.linkedin.com/" }
+  - { code: MAIL, title: Email, sub: Drop me a line, url: "mailto:you@example.com" }
+  - { code: X, title: X / Twitter, sub: "@your-handle", url: "https://x.com/" }
+  - { code: GH, auto: github }
+
+# Two or four repositories shown as cards with their real star history.
+# `repo` may be "name" (yours) or "owner/name".
+work:
+  status: "SELECTED PROJECTS · PYTHON · RUST · SQL"
+  repos:
+    - { repo: tickstore, tag: MARKET DATA, pitch: "Columnar tick store with nanosecond replay", sub: "Arrow + Parquet, 40M rows/s scans" }
+    - { repo: fillsim, tag: EXECUTION, pitch: "Queue-position aware fill simulator", sub: "Calibrated on L3 order book data" }
+    - { repo: alphalab, tag: RESEARCH, pitch: "Factor research notebooks, reproducible", sub: "Walk-forward, purged CV, costs in" }
+    - { repo: bookviz, tag: TOOLING, pitch: "Order book heatmaps in the terminal", sub: "Live depth, trades and imbalance" }
+  # Optional: repos that also get a header banner (banner-<repo>.svg) for their own README.
+  banners: []
+
+# ── LAB: live markets (all keyless public data) ───────────────────────────────
+markets:
+  # Yahoo Finance symbols. risk: include in the risk monitor. crypto: 24/7 asset (365-day vol).
+  # equity: used for the crypto/equity correlation signal. session: which session makes it lead the tape.
+  tape:
+    - { symbol: BTC-USD, label: BTC, risk: true, crypto: true }
+    - { symbol: ETH-USD, label: ETH, risk: true, crypto: true }
+    - { symbol: SOL-USD, label: SOL, risk: true, crypto: true }
+    - { symbol: ^GSPC, label: SPX, risk: true, equity: true, session: NYSE }
+    - { symbol: ^NDX, label: NDX, risk: true, equity: true, session: NYSE }
+    - { symbol: ^FTSE, label: FTSE, risk: true, session: LSE }
+    - { symbol: GC=F, label: GOLD, risk: true, session: NYSE }
+    - { symbol: ^TNX, label: US10Y, percent: true, session: NYSE }
+    - { symbol: GBPUSD=X, label: GBPUSD, decimals: 4, session: LSE }
+  # Exchange sessions shown in the hero status bar (local exchange time, weekdays).
+  sessions:
+    - { name: LSE, tz: Europe/London, open: "08:00", close: "16:30" }
+    - { name: NYSE, tz: America/New_York, open: "09:30", close: "16:00" }
+  # Deribit options (ATM term structure) and Hyperliquid perps (funding, open interest).
+  options: [BTC, ETH]
+  perps: [BTC, ETH, SOL, HYPE, XRP]
+
+# ── FLOW: how you ship ────────────────────────────────────────────────────────
+flow:
+  # Shaded bands on the commit-hour histogram, in your timezone.
+  bands:
+    - [8, 12, LDN AM]
+    - [14, 17, NY OPEN]
+    - [21, 24, AFTER HOURS]
+  snake: true          # Platane/snk contribution snake (ignored in demo mode)
+  recent: 5            # rows in "recent pushes"
+  hide: []             # repos never listed in recent pushes

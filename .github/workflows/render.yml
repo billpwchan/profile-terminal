@@ -1,0 +1,89 @@
+name: render
+
+# Re-renders every panel and publishes them to the `output` branch (force-pushed, no history),
+# so your default branch only ever carries your own commits.
+on:
+  schedule:
+    - cron: "17 * * * *"   # hourly; GitHub may space scheduled runs out under load
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths: [profile.yml, terminal/**, requirements.txt, .github/workflows/render.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: render
+  cancel-in-progress: false
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      # Start from the last published panels: a feed that fails this run keeps its previous panel live,
+      # and state.json lets values that moved since then flash once.
+      - name: Restore previous renders
+        uses: actions/checkout@v5
+        continue-on-error: true
+        with:
+          ref: output
+          path: dist
+      - run: rm -rf dist/.git && mkdir -p dist
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Render panels
+        env:
+          # The default token reads public data. Add a PROFILE_TOKEN secret (classic PAT, read:user)
+          # to include private contributions.
+          GH_TOKEN: ${{ secrets.PROFILE_TOKEN || github.token }}
+        run: python -m terminal render --out dist
+
+      - name: Read config switches
+        id: flags
+        run: |
+          echo "snake=$(python -m terminal flag snake)" >> "$GITHUB_OUTPUT"
+          echo "snake_outputs=$(python -m terminal flag snake-outputs)" >> "$GITHUB_OUTPUT"
+          echo "profile_repo=$(python -m terminal flag profile-repo)" >> "$GITHUB_OUTPUT"
+
+      - name: Contribution snake
+        if: steps.flags.outputs.snake == 'true'
+        uses: Platane/snk/svg-only@v3
+        continue-on-error: true
+        with:
+          github_user_name: ${{ github.repository_owner }}
+          outputs: ${{ steps.flags.outputs.snake_outputs }}
+
+      - run: python -m terminal snake --out dist
+      - run: python -m terminal check --out dist
+
+      - name: Publish panels to the output branch
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: output
+          build_dir: dist
+          keep_history: false
+          jekyll: false
+          commit_message: "render: refresh panels"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Profile repos (named after their owner) get README.md generated from profile.yml.
+      - name: Sync README
+        if: steps.flags.outputs.profile_repo == 'true'
+        run: |
+          python -m terminal readme --write
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git diff --cached --quiet && exit 0
+          git commit -m "readme: sync with profile.yml [skip ci]"
+          git pull --rebase && git push
